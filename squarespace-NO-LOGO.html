@@ -1,0 +1,570 @@
+<style>
+    /* Reset and basic styling */
+    .flashcard-container * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    .flashcard-container {
+        font-family: Arial, sans-serif;
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 20px;
+    }
+
+    /* Flashcard box */
+    .flashcard {
+        position: relative;
+        width: 100%;
+        background-color: #e8dcc8;
+        border-radius: 15px;
+        box-shadow: 0 4px 8px rgba(45, 84, 70, 0.2);
+        padding: 40px;
+    }
+
+    /* Progress indicator */
+    .flashcard .progress-indicator {
+        text-align: center;
+        font-size: 14px;
+        color: #2d5446;
+        font-weight: bold;
+        margin-bottom: 20px;
+        padding-top: 10px;
+    }
+
+    /* Question side styling */
+    .flashcard .question-side h2 {
+        color: #2d5446;
+        margin-bottom: 20px;
+        border-bottom: 3px solid #2d5446;
+        padding-bottom: 10px;
+    }
+
+    .flashcard .question-text {
+        font-size: 18px;
+        color: #333;
+        margin-bottom: 25px;
+        line-height: 1.6;
+    }
+
+    /* Answer buttons */
+    .flashcard .answers {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .flashcard .answer-btn {
+        background-color: #2d5446;
+        color: white;
+        border: none;
+        padding: 15px 20px;
+        font-size: 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        text-align: left;
+        transition: all 0.3s ease;
+    }
+
+    .flashcard .answer-btn:hover {
+        background-color: #1e3a2e;
+        transform: translateX(5px);
+    }
+
+    /* Answer side styling */
+    .flashcard .answer-side {
+        text-align: center;
+    }
+
+    .flashcard .answer-side h2 {
+        color: #2d5446;
+        margin-bottom: 20px;
+        font-size: 24px;
+    }
+
+    .flashcard .explanation {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 4px solid #2d5446;
+        text-align: left;
+        line-height: 1.8;
+        color: #333;
+        margin-bottom: 20px;
+    }
+
+    .flashcard .explanation strong {
+        color: #2d5446;
+    }
+
+    /* Reset button */
+    .flashcard .reset-btn {
+        background-color: #e8dcc8;
+        color: #2d5446;
+        border: 2px solid #2d5446;
+        padding: 12px 30px;
+        font-size: 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .flashcard .reset-btn:hover {
+        background-color: #2d5446;
+        color: white;
+    }
+
+    /* Animations */
+    .flashcard.correct-animation {
+        animation: correctBounce 0.6s ease;
+    }
+
+    @keyframes correctBounce {
+        0% { transform: scale(1); }
+        25% { transform: scale(1.05); box-shadow: 0 0 20px rgba(46, 125, 50, 0.6); }
+        50% { transform: scale(0.95); }
+        75% { transform: scale(1.03); box-shadow: 0 0 30px rgba(46, 125, 50, 0.8); }
+        100% { transform: scale(1); box-shadow: 0 4px 8px rgba(45, 84, 70, 0.2); }
+    }
+
+    .flashcard.wrong-animation {
+        animation: wrongShake 0.6s ease;
+    }
+
+    @keyframes wrongShake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); box-shadow: 0 0 20px rgba(211, 47, 47, 0.6); }
+        20%, 40%, 60%, 80% { transform: translateX(10px); box-shadow: 0 0 30px rgba(211, 47, 47, 0.8); }
+    }
+
+    /* Navigation buttons */
+    .flashcard .navigation {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 30px;
+        gap: 15px;
+    }
+
+    .flashcard .nav-btn {
+        flex: 1;
+        background-color: #2d5446;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        font-size: 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .flashcard .nav-btn:hover:not(:disabled) {
+        background-color: #1e3a2e;
+        transform: translateY(-2px);
+    }
+
+    .flashcard .nav-btn:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+</style>
+
+<div class="flashcard-container">
+    <div class="flashcard">
+        <!-- Progress indicator -->
+        <div class="progress-indicator">
+            <span id="current-question-fc">1</span> / <span id="total-questions-fc">20</span>
+        </div>
+
+        <!-- The question side -->
+        <div class="question-side">
+            <h2 id="question-title-fc">Question 1</h2>
+            <p class="question-text" id="question-text-fc"></p>
+
+            <!-- Answer options -->
+            <div class="answers">
+                <button class="answer-btn" id="answer-a-fc">A) </button>
+                <button class="answer-btn" id="answer-b-fc">B) </button>
+                <button class="answer-btn" id="answer-c-fc">C) </button>
+                <button class="answer-btn" id="answer-d-fc">D) </button>
+                <button class="answer-btn" id="answer-e-fc">E) </button>
+            </div>
+        </div>
+
+        <!-- The answer side (hidden at first) -->
+        <div class="answer-side" style="display: none;">
+            <h2 id="correct-answer-text-fc">Correct Answer: B</h2>
+            <p class="explanation" id="explanation-text-fc"></p>
+            <button class="reset-btn">See Question Again</button>
+        </div>
+
+        <!-- Navigation buttons -->
+        <div class="navigation">
+            <button class="nav-btn" id="prev-btn-fc">← Previous</button>
+            <button class="nav-btn" id="next-btn-fc">Next →</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    // ALL YOUR QUESTIONS
+    const questions = [
+        {
+            question: "A 55-year-old woman presents with painful oral erosions for 3 months, now developing flaccid blisters on her trunk. Skin biopsy shows a suprabasilar split with acantholysis. DIF shows intercellular IgG in a 'chicken wire' pattern. Which antibody profile would you expect on ELISA?",
+            answers: {
+                A: "Anti-BP180 and anti-BP230 positive",
+                B: "Anti-desmoglein 1 positive only",
+                C: "Anti-desmoglein 3 positive, with or without anti-desmoglein 1",
+                D: "Anti-collagen VII positive",
+                E: "Anti-laminin 332 positive"
+            },
+            correctAnswer: "C",
+            explanation: "Pemphigus vulgaris = always <strong>anti-Dsg3 ± anti-Dsg1</strong>. Oral erosions precede skin involvement because Dsg3 is abundant in mucosa. Anti-Dsg1 only = pemphigus foliaceus."
+        },
+        {
+            question: "A 75-year-old man with Parkinson's disease develops pruritic urticarial rash evolving into tense blisters. Which investigation best differentiates bullous pemphigoid from epidermolysis bullosa acquisita?",
+            answers: {
+                A: "H&E biopsy",
+                B: "Direct immunofluorescence",
+                C: "Indirect immunofluorescence on monkey oesophagus",
+                D: "Salt-split skin test",
+                E: "ELISA for anti-BP180"
+            },
+            correctAnswer: "D",
+            explanation: "Both show linear IgG at BMZ on standard DIF. <strong>Salt-split separates at lamina lucida</strong>: BP = antibodies on roof (epidermal side); EBA = antibodies on floor (dermal side)."
+        },
+        {
+            question: "Which substrate is classically used for indirect immunofluorescence when pemphigus foliaceus is suspected?",
+            answers: {
+                A: "Monkey oesophagus",
+                B: "Guinea pig oesophagus",
+                C: "Rat bladder",
+                D: "Normal human skin",
+                E: "Primate liver"
+            },
+            correctAnswer: "B",
+            explanation: "<strong>Guinea pig oesophagus</strong> = rich in Dsg1 (PF). Mnemonics: 'guinea pig in foliage' = foliaceus; 'monkey acting vulgar' = vulgaris (Dsg3); rat bladder = paraneoplastic (plakins); primate liver = DH (endomysial antibodies)."
+        },
+        {
+            question: "A patient with CLL presents with severe oral ulceration, haemorrhagic cheilitis, and polymorphic rash resembling erythema multiforme. Histology shows suprabasal acantholysis with interface dermatitis. Which combination of antibody targets is most consistent with this diagnosis?",
+            answers: {
+                A: "Anti-Dsg1 only",
+                B: "Anti-Dsg3 only",
+                C: "Anti-BP180 and anti-BP230",
+                D: "Anti-Dsg3, anti-Dsg1, anti-envoplakin, anti-periplakin, anti-desmoplakin",
+                E: "Anti-collagen VII"
+            },
+            correctAnswer: "D",
+            explanation: "Paraneoplastic pemphigus has antibodies to <strong>MULTIPLE targets: Dsg3, Dsg1, envoplakin, periplakin, and desmoplakins (plakins)</strong>. Haemorrhagic cheilitis + polymorphic rash + acantholysis WITH interface dermatitis (dual pathology from antibodies + cytotoxic T cells). Associated malignancies: lymphoma 40%, CLL 30%, Castleman's 10%."
+        },
+        {
+            question: "A 65-year-old woman presents with crusted erosions in seborrhoeic distribution. No intact blisters seen. ELISA: anti-Dsg1 elevated, anti-Dsg3 normal. What is the level of the epidermal split?",
+            answers: {
+                A: "Subepidermal",
+                B: "Suprabasilar",
+                C: "Subcorneal/granular layer",
+                D: "Within the basement membrane zone",
+                E: "Lamina densa"
+            },
+            correctAnswer: "C",
+            explanation: "<strong>Pemphigus foliaceus</strong> = anti-Dsg1 only = subcorneal/granular split (Dsg1 most abundant superficially). Blisters so superficial they rupture immediately → erosions only. PV = suprabasilar."
+        },
+        {
+            question: "Why does pemphigus foliaceus spare the mucous membranes?",
+            answers: {
+                A: "Mucous membranes lack any desmoglein expression",
+                B: "Dsg3 is highly expressed in mucosa and compensates for loss of Dsg1",
+                C: "Mucous membranes are protected by thick keratin",
+                D: "Anti-Dsg1 antibodies cannot penetrate mucous membranes",
+                E: "The BMZ is thicker in mucous membranes"
+            },
+            correctAnswer: "B",
+            explanation: "<strong>Desmoglein compensation theory</strong>: mucosa has high Dsg3, low Dsg1. When Dsg1 is targeted (PF), Dsg3 maintains adhesion → no mucosal blistering. PV targets Dsg3 → mucosal involvement."
+        },
+        {
+            question: "Where should a skin biopsy for DIF be taken in suspected autoimmune blistering disease?",
+            answers: {
+                A: "Centre of an intact blister",
+                B: "A crusted erosion",
+                C: "Perilesional normal skin within 1cm of active lesion",
+                D: "Any normal skin distant from lesions",
+                E: "The roof of a blister"
+            },
+            correctAnswer: "C",
+            explanation: "DIF biopsy = <strong>perilesional, non-inflamed skin within 1cm</strong>, in Michel's medium. Lesional tissue is destroyed by inflammation → false negatives. Separate biopsy of lesional skin in formalin for H&E."
+        },
+        {
+            question: "A 70-year-old woman has tense blisters at trauma sites healing with milia and scarring. DIF shows linear IgG with 'u-serration' pattern. Target antigen?",
+            answers: {
+                A: "BP180",
+                B: "BP230",
+                C: "Desmoglein 3",
+                D: "Collagen VII",
+                E: "Laminin 332"
+            },
+            correctAnswer: "D",
+            explanation: "EBA = <strong>anti-collagen VII</strong> (anchoring fibrils below lamina densa). Mechanobullous + scarring with milia. Serration patterns: 'u' = EBA/bullous SLE (below lamina densa); 'n' = pemphigoid diseases (above)."
+        },
+        {
+            question: "A 32-year-old pregnant woman at 30 weeks gestation develops intensely pruritic papules starting around her umbilicus, progressing to vesicles on her abdomen and thighs. Which antibody target is most likely?",
+            answers: {
+                A: "Desmoglein 1",
+                B: "Desmoglein 3",
+                C: "BP180 (NC16a domain)",
+                D: "Collagen VII",
+                E: "Transglutaminase"
+            },
+            correctAnswer: "C",
+            explanation: "<strong>Pemphigoid gestationis</strong> = IgG against NC16a domain of BP180. Periumbilical onset is characteristic. DIF shows linear C3 in 100% but IgG only in ~25%. Usually presents in 2nd/3rd trimester."
+        },
+        {
+            question: "An 82-year-old man develops tense blisters on an urticarial base. He has a history of stroke and dementia. Which of these is a recognised association with his likely diagnosis?",
+            answers: {
+                A: "Coeliac disease",
+                B: "Neurological disease",
+                C: "Hepatitis C",
+                D: "HIV infection",
+                E: "Inflammatory bowel disease"
+            },
+            correctAnswer: "B",
+            explanation: "<strong>Bullous pemphigoid is associated with neurological disease</strong> (stroke, Parkinson's, dementia). BP180/collagen XVII is also found in CNS tissue. Poor prognostic factors in BP include older age, dementia, stroke, and cardiac disease."
+        },
+        {
+            question: "In moderate pemphigus vulgaris, what is the first-line treatment according to European guidelines?",
+            answers: {
+                A: "Rituximab is contraindicated",
+                B: "Rituximab only after failure of two immunosuppressants",
+                C: "Rituximab with or without corticosteroids",
+                D: "Rituximab only for paraneoplastic pemphigus",
+                E: "Rituximab for maintenance only"
+            },
+            correctAnswer: "C",
+            explanation: "S2K EADV guidelines: <strong>rituximab ± steroids is first-line for PV</strong>. Anti-CD20 = 'kills the B cell factories' making pathogenic antibodies. Better remission rates and fewer side effects than steroids + conventional immunosuppressants."
+        },
+        {
+            question: "A 70-year-old woman with recurrent conjunctival erosions develops symblepharon. Skin biopsy from a blister shows subepidermal split. Which target antigen, if positive, would warrant investigation for occult malignancy?",
+            answers: {
+                A: "BP180",
+                B: "BP230",
+                C: "Collagen VII",
+                D: "Laminin-332",
+                E: "Desmoglein 3"
+            },
+            correctAnswer: "D",
+            explanation: "Cicatricial/mucous membrane pemphigoid with <strong>anti-laminin-332 antibodies has increased risk of associated malignancy</strong>. Symblepharon (conjunctival adhesions) is characteristic of cicatricial pemphigoid and can lead to blindness."
+        },
+        {
+            question: "A patient with pemphigus vulgaris has a hoarse voice. What is the most appropriate next step?",
+            answers: {
+                A: "Increase oral prednisolone dose",
+                B: "Urgent ENT review",
+                C: "Start dapsone",
+                D: "Reassure and observe",
+                E: "Arrange outpatient laryngoscopy in 6 weeks"
+            },
+            correctAnswer: "B",
+            explanation: "Hoarse voice in PV suggests <strong>laryngeal involvement with potential for oedema and erosions → airway compromise risk</strong>. Requires urgent ENT assessment. Mucosal involvement can affect oral cavity, pharynx, larynx, oesophagus, and genitalia."
+        },
+        {
+            question: "Which clinical feature is most characteristic of pemphigus vegetans?",
+            answers: {
+                A: "Tense blisters on extensor surfaces",
+                B: "Scarring alopecia",
+                C: "Vegetating papillomatous erosions in flexures",
+                D: "Targetoid lesions on palms",
+                E: "Photosensitive rash"
+            },
+            correctAnswer: "C",
+            explanation: "Pemphigus vegetans = rare PV variant (~2%) with <strong>vegetating, hyperkeratotic, papillomatous fissured erosions in flexural areas</strong> (axillae, groin). Often malodorous due to bacterial colonisation. Can have cerebriform tongue. DIF shows chicken wire IgG; ELISA shows anti-Dsg3."
+        },
+        {
+            question: "A Brazilian farmer presents with widespread crusted erosions. He reports several family members in his village have similar skin problems. ELISA shows anti-Dsg1 antibodies. What is the likely aetiology?",
+            answers: {
+                A: "Genetic mutation in desmoglein 1",
+                B: "Exposure to pesticides",
+                C: "Immune response triggered by insect bites",
+                D: "Viral infection",
+                E: "Contaminated water supply"
+            },
+            correctAnswer: "C",
+            explanation: "<strong>Fogo selvagem ('wildfire')</strong> = endemic pemphigus foliaceus in Brazil. Thought to be triggered by black fly bites - salivary proteins induce molecular mimicry against Dsg1. Investigations identical to sporadic PF."
+        },
+        {
+            question: "Which histopathology finding best distinguishes paraneoplastic pemphigus from pemphigus vulgaris?",
+            answers: {
+                A: "Suprabasal acantholysis",
+                B: "Intercellular IgG on DIF",
+                C: "Coexisting interface dermatitis with necrotic keratinocytes",
+                D: "Eosinophils in inflammatory infiltrate",
+                E: "Chicken wire pattern on IF"
+            },
+            correctAnswer: "C",
+            explanation: "PNP shows <strong>DUAL pathology: acantholysis (from antibodies) + interface dermatitis with necrotic keratinocytes</strong> (from cytotoxic T cells). This combination is the key H&E pointer. Both PV and PNP show acantholysis and chicken wire IgG."
+        },
+        {
+            question: "A child has tense blisters in 'string of pearls' configuration after vancomycin treatment. Expected DIF finding?",
+            answers: {
+                A: "Linear IgG at BMZ",
+                B: "Linear IgA at BMZ",
+                C: "Granular IgA in dermal papillae",
+                D: "Intercellular IgG chicken wire pattern",
+                E: "Linear C3 only at BMZ"
+            },
+            correctAnswer: "B",
+            explanation: "<strong>Linear IgA disease</strong>: 'string of pearls' blisters around erythematous plaques. Common in children and elderly. Drug-induced (vancomycin classic). Linear IgA at BMZ (vs granular IgA in dermal papillae = DH). No coeliac association."
+        },
+        {
+            question: "Which histological feature distinguishes IgA pemphigus from pemphigus vulgaris and foliaceus?",
+            answers: {
+                A: "Subcorneal split location",
+                B: "Presence of intercellular IgA on DIF",
+                C: "Absence of acantholysis",
+                D: "Dermal scarring",
+                E: "Subepidermal split"
+            },
+            correctAnswer: "C",
+            explanation: "<strong>IgA pemphigus: intercellular IgA but NO acantholysis</strong> (unlike PV/PF). Shows intraepidermal neutrophilic infiltration with only mild loss of keratinocyte cohesion. Dapsone effective (neutrophilic infiltrate)."
+        },
+        {
+            question: "A patient with dermatitis herpetiformis asks about dietary management. Which statement is correct?",
+            answers: {
+                A: "A gluten-free diet has no effect on skin disease",
+                B: "A gluten-free diet works within days",
+                C: "A gluten-free diet treats both skin and gut disease but takes months to work",
+                D: "Dairy exclusion is the key dietary intervention",
+                E: "Diet is only effective if coeliac serology is positive"
+            },
+            correctAnswer: "C",
+            explanation: "<strong>Gluten-free diet treats DH skin disease AND underlying enteropathy, but takes months to years</strong>. Dapsone provides rapid relief (within 3 days) while dietary changes take effect. >90% of DH patients have gluten-sensitive enteropathy."
+        },
+        {
+            question: "First-line treatment for rapid symptom control in dermatitis herpetiformis?",
+            answers: {
+                A: "Rituximab",
+                B: "Oral prednisolone",
+                C: "Dapsone",
+                D: "Mycophenolate mofetil",
+                E: "Topical clobetasol"
+            },
+            correctAnswer: "C",
+            explanation: "<strong>Dapsone works within 3 days in DH</strong> (rapid response is almost diagnostic). Long-term: gluten-free diet (treats skin + gut but takes months). Check G6PD before starting dapsone. Also effective in linear IgA disease and IgA pemphigus."
+        }
+    ];
+
+    // FLASHCARD SYSTEM CODE
+    let currentQuestionIndex = 0;
+
+    const questionTitle = document.getElementById('question-title-fc');
+    const questionText = document.getElementById('question-text-fc');
+    const answerButtons = {
+        A: document.getElementById('answer-a-fc'),
+        B: document.getElementById('answer-b-fc'),
+        C: document.getElementById('answer-c-fc'),
+        D: document.getElementById('answer-d-fc'),
+        E: document.getElementById('answer-e-fc')
+    };
+    const questionSide = document.querySelector('.flashcard .question-side');
+    const answerSide = document.querySelector('.flashcard .answer-side');
+    const correctAnswerText = document.getElementById('correct-answer-text-fc');
+    const explanationText = document.getElementById('explanation-text-fc');
+    const resetButton = document.querySelector('.flashcard .reset-btn');
+    const flashcard = document.querySelector('.flashcard');
+    const prevBtn = document.getElementById('prev-btn-fc');
+    const nextBtn = document.getElementById('next-btn-fc');
+    const currentQuestionSpan = document.getElementById('current-question-fc');
+    const totalQuestionsSpan = document.getElementById('total-questions-fc');
+
+    totalQuestionsSpan.textContent = questions.length;
+
+    function loadQuestion(index) {
+        const q = questions[index];
+        questionTitle.textContent = `Question ${index + 1}`;
+        questionText.textContent = q.question;
+        answerButtons.A.textContent = `A) ${q.answers.A}`;
+        answerButtons.B.textContent = `B) ${q.answers.B}`;
+        answerButtons.C.textContent = `C) ${q.answers.C}`;
+        answerButtons.D.textContent = `D) ${q.answers.D}`;
+        answerButtons.E.textContent = `E) ${q.answers.E}`;
+        currentQuestionSpan.textContent = index + 1;
+        questionSide.style.display = 'block';
+        answerSide.style.display = 'none';
+        prevBtn.disabled = (index === 0);
+        nextBtn.disabled = (index === questions.length - 1);
+    }
+
+    function playCorrectSound() {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
+    }
+
+    function playIncorrectSound() {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.frequency.value = 200;
+        oscillator.type = 'sawtooth';
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
+    }
+
+    function showAnswer(clickedAnswer) {
+        const q = questions[currentQuestionIndex];
+        if (clickedAnswer === q.correctAnswer) {
+            flashcard.classList.add('correct-animation');
+            playCorrectSound();
+        } else {
+            flashcard.classList.add('wrong-animation');
+            playIncorrectSound();
+        }
+        setTimeout(function() {
+            flashcard.classList.remove('correct-animation', 'wrong-animation');
+            correctAnswerText.textContent = `Correct Answer: ${q.correctAnswer}`;
+            explanationText.innerHTML = q.explanation;
+            questionSide.style.display = 'none';
+            answerSide.style.display = 'block';
+        }, 600);
+    }
+
+    Object.keys(answerButtons).forEach(function(letter) {
+        answerButtons[letter].addEventListener('click', function() {
+            showAnswer(letter);
+        });
+    });
+
+    resetButton.addEventListener('click', function() {
+        questionSide.style.display = 'block';
+        answerSide.style.display = 'none';
+    });
+
+    prevBtn.addEventListener('click', function() {
+        if (currentQuestionIndex > 0) {
+            currentQuestionIndex--;
+            loadQuestion(currentQuestionIndex);
+        }
+    });
+
+    nextBtn.addEventListener('click', function() {
+        if (currentQuestionIndex < questions.length - 1) {
+            currentQuestionIndex++;
+            loadQuestion(currentQuestionIndex);
+        }
+    });
+
+    loadQuestion(0);
+})();
+</script>
